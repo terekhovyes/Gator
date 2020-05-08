@@ -1,2 +1,3 @@
 rootProject.name='GatorSample'
 include ':gatorsample'
+include ':gator'
