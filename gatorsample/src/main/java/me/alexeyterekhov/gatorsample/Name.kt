@@ -1,3 +1,7 @@
 package me.alexeyterekhov.gatorsample
 
-class Name(val string: String)
+class Name(val string: String) {
+    override fun toString(): String {
+        return "$string@${hashCode()}"
+    }
+}

@@ -16,12 +16,13 @@ class MainActivity : AppCompatActivity() {
             includeModule {
                 single { Name("Alexey") }
                 factory { Greeting(get()) }
+                single { GreetingPrinter(get()) }
             }
         }
 
         val activityScope = Gator.openScope(appScope, this) {
             includeModule {
-                single { GreetingPrinter(get()) }
+                single { Name("Sergey") }
             }
         }
 

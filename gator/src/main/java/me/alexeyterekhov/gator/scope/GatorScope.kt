@@ -23,48 +23,31 @@ class GatorScope(
     inline fun <reified T> lazy(name: Any? = null): Lazy<T> =
         lazy(T::class.java, name)
 
-    fun <T> get(type: Class<T>, name: Any? = null): T {
-        return find(
-            type,
-            name,
-            fromBinding = { binding -> binding.get(this) },
-            fromParent = { parent -> parent.get(type, name) }
-        )
-    }
+    fun <T> get(type: Class<T>, name: Any? = null): T =
+        binding(type, name).get(this)
 
-    fun <T> provider(type: Class<T>, name: Any? = null): () -> T {
-        return find(
-            type,
-            name,
-            fromBinding = { binding ->
-                { binding.get(this) }
-            },
-            fromParent = { parent -> parent.provider(type, name) }
-        )
-    }
+    fun <T> provider(type: Class<T>, name: Any? = null): () -> T =
+        binding(type, name).let { binding ->
+            { binding.get(this) }
+        }
 
-    fun <T> lazy(type: Class<T>, name: Any? = null): Lazy<T> {
-        return find(
-            type,
-            name,
-            fromBinding = { binding ->
-                kotlin.lazy { binding.get(this) }
-            },
-            fromParent = { parent -> parent.lazy(type, name) }
-        )
-    }
+    fun <T> lazy(type: Class<T>, name: Any? = null): Lazy<T> =
+        binding(type, name).let { binding ->
+            kotlin.lazy { binding.get(this) }
+        }
 
-    private inline fun <T, R> find(
-        type: Class<T>,
-        name: Any?,
-        fromBinding: (GatorBinding<T>) -> R,
-        fromParent: (GatorScope) -> R
-    ): R {
+    private fun <T> binding(type: Class<T>, name: Any?): GatorBinding<T> {
         val binding = bindingSet.binding(type, name)
         return when {
-            binding != null -> fromBinding(binding)
-            parent != null -> fromParent(parent)
-            else -> throw IllegalStateException("Binding not found for type=$type${if (name != null) " name=$name" else ""}")
+            binding != null -> binding
+            parent != null -> parent.binding(type, name)
+            else -> throw IllegalStateException("Binding not found for ${toString(type, name)}")
         }
+    }
+
+    private fun toString(type: Class<*>, name: Any?): String {
+        val typeString = "type=$type"
+        val nameString = name?.let { " name=$it" } ?: ""
+        return typeString + nameString
     }
 }
