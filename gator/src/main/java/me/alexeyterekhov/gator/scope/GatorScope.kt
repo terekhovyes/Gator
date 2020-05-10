@@ -24,16 +24,16 @@ class GatorScope(
         lazy(T::class.java, name)
 
     fun <T> get(type: Class<T>, name: Any? = null): T =
-        binding(type, name).get(this)
+        binding(type, name).provider.get(this)
 
     fun <T> provider(type: Class<T>, name: Any? = null): () -> T =
         binding(type, name).let { binding ->
-            { binding.get(this) }
+            { binding.provider.get(this) }
         }
 
     fun <T> lazy(type: Class<T>, name: Any? = null): Lazy<T> =
         binding(type, name).let { binding ->
-            kotlin.lazy { binding.get(this) }
+            kotlin.lazy { binding.provider.get(this) }
         }
 
     private fun <T> binding(type: Class<T>, name: Any?): GatorBinding<T> {
