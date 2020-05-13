@@ -1,61 +1,58 @@
 package me.alexeyterekhov.gator
 
 import me.alexeyterekhov.gator.scope.GatorScope
+import me.alexeyterekhov.gator.scope.GatorScopeInitializer
+import me.alexeyterekhov.gator.scope.scope
 
 object Gator {
 
-    private val keyScope = mutableMapOf<Any, GatorScope>()
+    private val keyToScope = mutableMapOf<Any, GatorScope>()
 
-    fun openScope(vararg keys: Any, init: (GatorScope.() -> Unit)? = null): GatorScope {
-        check(keys.isNotEmpty()) { "Keys mustn't be empty to open scope" }
+    fun scope(vararg keys: Any, init: GatorScopeInitializer? = null): GatorScope {
+        check(keys.isNotEmpty()) { "Gator requires key to open scope" }
         val key = keys.last()
-        val existingScope = keyScope[key]
-        return existingScope ?: newScope(keys, init)
+        val alreadyOpenedScope = keyToScope[key]
+        return alreadyOpenedScope ?: newScope(keys, init)
     }
 
-    fun openScope(parent: GatorScope, key: Any, init: (GatorScope.() -> Unit)? = null): GatorScope {
-        check(parent.key in keyScope) { "Parent scope must be present in Gator to open sub scope" }
-        val existingScope = keyScope[key]
-        return existingScope ?: newScope(parent, key, init)
+    fun scope(parent: GatorScope, key: Any, init: GatorScopeInitializer? = null): GatorScope {
+        check(parent.key in keyToScope) { "Gator requires parent scope to be registered in Gator" }
+        val alreadyOpenedScope = keyToScope[key]
+        return alreadyOpenedScope ?: newScope(parent, key, init)
     }
 
-    fun scope(key: Any): GatorScope? =
-        keyScope[key]
+    fun scopeOrNull(key: Any): GatorScope? =
+        keyToScope[key]
 
     fun scopeExists(key: Any): Boolean =
-        key in keyScope
+        key in keyToScope
 
     fun dropScope(key: Any) {
-        val scope = keyScope[key]
-        if (scope != null) {
-            val childrenScopes = keyScope.values.filter { it.parent === scope }
-            childrenScopes.forEach { dropScope(it.key) }
-            keyScope.remove(key)
+        val scopeToDrop = keyToScope[key]
+        if (scopeToDrop != null) {
+            val childrenScopes = keyToScope.values.filter { it.parent === scopeToDrop }
+            childrenScopes.forEach { childScope ->
+                if (childScope.key != null) {
+                    dropScope(childScope.key)
+                }
+            }
+            keyToScope.remove(key)
         }
     }
 
-    private fun newScope(keys: Array<out Any>, init: (GatorScope.() -> Unit)?): GatorScope {
-        val parentScope = parentScope(keys)
+    private fun newScope(keys: Array<out Any>, init: GatorScopeInitializer?): GatorScope {
+        val parent = parentScope(keys)
         val key = keys.last()
-        return newScope(parentScope, key, init)
+        return newScope(parent, key, init)
     }
 
-    private fun newScope(parentScope: GatorScope?, key: Any, init: (GatorScope.() -> Unit)?): GatorScope {
-        val newScope = GatorScope(key, parentScope).also {
-            keyScope[key] = it
+    private fun newScope(parent: GatorScope?, key: Any, init: GatorScopeInitializer?): GatorScope =
+        scope(key, parent, init).also {
+            keyToScope[key] = it
         }
-        if (init != null) {
-            newScope.init()
-        }
-        return newScope
-    }
 
     private fun parentScope(keys: Array<out Any>): GatorScope? {
-        val parentScopeKeys = keys.dropLast(1).toTypedArray()
-        return if (parentScopeKeys.isNotEmpty()) {
-            openScope(*parentScopeKeys)
-        } else {
-            null
-        }
+        val parentKeys = keys.dropLast(1).toTypedArray()
+        return if (parentKeys.isNotEmpty()) scope(*parentKeys) else null
     }
 }

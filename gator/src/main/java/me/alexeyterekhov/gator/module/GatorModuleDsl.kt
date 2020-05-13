@@ -1,85 +1,84 @@
 package me.alexeyterekhov.gator.module
 
-import me.alexeyterekhov.gator.binding.*
-import me.alexeyterekhov.gator.scope.GatorScope
+import me.alexeyterekhov.gator.binding.GatorBinding
+import me.alexeyterekhov.gator.binding.GatorBindingKey
+import me.alexeyterekhov.gator.provider.GatorFactoryProvider
+import me.alexeyterekhov.gator.provider.GatorProvider
+import me.alexeyterekhov.gator.provider.GatorProviderFunction
+import me.alexeyterekhov.gator.provider.GatorSingleProvider
 
-fun module(init: GatorModuleContext.() -> Unit): GatorModule {
-    return GatorModuleBuilder()
-        .apply { init() }
-        .build()
+typealias GatorModuleInitializer = GatorModuleDsl.() -> Unit
+
+fun module(init: GatorModuleInitializer): GatorModule {
+    val moduleDsl = GatorModuleDsl()
+    moduleDsl.init()
+    return moduleDsl.moduleBuilder.build()
 }
 
-abstract class GatorModuleContext {
+class GatorModuleDsl {
 
-    inline fun <reified T> single(noinline factory: GatorScope.() -> T): GatorBindingContext<T> =
-        single(T::class.java, null, factory)
+    val moduleBuilder = GatorModuleBuilder()
 
-    inline fun <reified T> single(name: Any?, noinline factory: GatorScope.() -> T): GatorBindingContext<T> =
-        single(T::class.java, name, factory)
+    inline fun <reified T> single(noinline providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> =
+        single(T::class.java, null, providerFunction)
 
-    inline fun <reified T> factory(noinline factory: GatorScope.() -> T): GatorBindingContext<T> =
-        factory(T::class.java, null, factory)
+    inline fun <reified T> factory(noinline providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> =
+        factory(T::class.java, null, providerFunction)
 
-    inline fun <reified T> factory(name: Any?, noinline factory: GatorScope.() -> T): GatorBindingContext<T> =
-        factory(T::class.java, name, factory)
+    inline fun <reified T> single(name: Any?, noinline providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> =
+        single(T::class.java, name, providerFunction)
 
-    fun <T> single(type: Class<T>, factory: GatorScope.() -> T): GatorBindingContext<T> =
-        single(type, null, factory)
+    inline fun <reified T> factory(name: Any?, noinline providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> =
+        factory(T::class.java, name, providerFunction)
 
-    fun <T> factory(type: Class<T>, factory: GatorScope.() -> T): GatorBindingContext<T> =
-        factory(type, null, factory)
+    fun <T> single(type: Class<T>, providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> =
+        single(type, null, providerFunction)
 
-    abstract fun <T> single(type: Class<T>, name: Any?, factory: GatorScope.() -> T): GatorBindingContext<T>
-    abstract fun <T> factory(type: Class<T>, name: Any?, factory: GatorScope.() -> T): GatorBindingContext<T>
-}
+    fun <T> factory(type: Class<T>, providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> =
+        factory(type, null, providerFunction)
 
-interface GatorBindingContext<T> {
-    infix fun alsoBinds(type: Class<in T>): GatorBindingContext<T>
-    fun alsoBinds(type: Class<in T>, name: Any? = null): GatorBindingContext<T>
-}
-
-private class GatorBindingBuilder<T>(
-    private val provider: GatorProvider<out T>
-) : GatorBindingContext<T> {
-
-    val keys = mutableListOf<GatorBindingKey<in T>>()
-
-    fun build(): GatorBinding<T> =
-        GatorBinding(keys, provider)
-
-    override fun alsoBinds(type: Class<in T>): GatorBindingContext<T> {
-        this.keys += GatorBindingKey(type)
-        return this
+    fun <T> single(type: Class<T>, name: Any?, providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> {
+        val singleProvider = GatorSingleProvider(providerFunction)
+        val bindingKey = GatorBindingKey(type, name)
+        return GatorBindingBuilder<T>()
+            .apply { provider = singleProvider }
+            .apply { keys += bindingKey }
+            .also { moduleBuilder.bindingBuilders += it }
     }
 
-    override fun alsoBinds(type: Class<in T>, name: Any?): GatorBindingContext<T> {
-        this.keys += GatorBindingKey(type, name)
-        return this
+    fun <T> factory(type: Class<T>, name: Any?, providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> {
+        val factoryProvider = GatorFactoryProvider(providerFunction)
+        val bindingKey = GatorBindingKey(type, name)
+        return GatorBindingBuilder<T>()
+            .apply { provider = factoryProvider }
+            .apply { keys += bindingKey }
+            .also { moduleBuilder.bindingBuilders += it }
     }
+
+    infix fun <T> GatorBindingBuilder<T>.alsoBinds(type: Class<in T>): GatorBindingBuilder<T> =
+        alsoBinds(GatorBindingKey(type))
+
+    fun <T> GatorBindingBuilder<T>.alsoBinds(type: Class<in T>, name: Any?): GatorBindingBuilder<T> =
+        alsoBinds(GatorBindingKey(type, name))
+
+    infix fun <T> GatorBindingBuilder<T>.alsoBinds(bindingKey: GatorBindingKey<in T>): GatorBindingBuilder<T> =
+        apply { keys += bindingKey }
 }
 
-private class GatorModuleBuilder : GatorModuleContext() {
+class GatorModuleBuilder {
 
-    private val bindingBuilders = mutableListOf<GatorBindingBuilder<*>>()
+    val bindings = mutableListOf<GatorBinding<*>>()
+    val bindingBuilders = mutableListOf<GatorBindingBuilder<*>>()
 
     fun build(): GatorModule =
-        GatorModule(
-            bindingBuilders.map { it.build() }
-        )
+        GatorModule(bindings + bindingBuilders.map { it.build() })
+}
 
-    override fun <T> single(type: Class<T>, name: Any?, factory: GatorScope.() -> T): GatorBindingContext<T> {
-        val provider = GatorProviderSingle(factory)
-        val key = GatorBindingKey(type, name)
-        return GatorBindingBuilder(provider)
-            .apply { keys += key }
-            .also { bindingBuilders += it }
-    }
+class GatorBindingBuilder<T> {
 
-    override fun <T> factory(type: Class<T>, name: Any?, factory: GatorScope.() -> T): GatorBindingContext<T> {
-        val provider = GatorProviderFactory(factory)
-        val key = GatorBindingKey(type, name)
-        return GatorBindingBuilder(provider)
-            .apply { keys += key }
-            .also { bindingBuilders += it }
-    }
+    val keys = mutableListOf<GatorBindingKey<in T>>()
+    var provider: GatorProvider<out T>? = null
+
+    fun build(): GatorBinding<T> =
+        GatorBinding(keys, checkNotNull(provider))
 }

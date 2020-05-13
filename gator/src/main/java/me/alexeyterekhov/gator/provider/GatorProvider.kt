@@ -1,7 +1,7 @@
-package me.alexeyterekhov.gator.binding
+package me.alexeyterekhov.gator.provider
 
 import me.alexeyterekhov.gator.scope.GatorScope
 
 interface GatorProvider<T> {
-    fun get(scope: GatorScope): T
+    fun value(scope: GatorScope): T
 }

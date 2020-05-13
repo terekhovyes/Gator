@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import me.alexeyterekhov.gator.Gator
-import me.alexeyterekhov.gator.scope.includeModule
+import me.alexeyterekhov.gator.scope.include
 
 class MainActivity : AppCompatActivity() {
 
@@ -12,34 +12,34 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val appScope = Gator.openScope(application) {
-            includeModule {
+        val appScope = Gator.scope(application) {
+            include {
                 single { Name("Alexey") }
-                factory { Greeting(get()) }
-                single { GreetingPrinter(get()) }
+                factory { Greeting(value()) }
+                single { GreetingPrinter(value()) }
             }
         }
 
-        val activityScope = Gator.openScope(appScope, this) {
-            includeModule {
+        val activityScope = Gator.scope(appScope, this) {
+            include {
                 single { Name("Sergey") }
             }
         }
 
-        val printer1 = activityScope.get<GreetingPrinter>()
-        val printer2 = activityScope.get<GreetingPrinter>()
+        val printer1 = activityScope.value<GreetingPrinter>()
+        val printer2 = activityScope.value<GreetingPrinter>()
         printer1.print()
         printer2.print()
         Log.i("GatorSample", "Printer1: $printer1")
         Log.i("GatorSample", "Printer2: $printer2")
 
-        val name1 = activityScope.get<Name>()
-        val name2 = activityScope.get<Name>()
+        val name1 = activityScope.value<Name>()
+        val name2 = activityScope.value<Name>()
         Log.i("GatorSample", "name1: $name1")
         Log.i("GatorSample", "name2: $name2")
 
-        val greeting1 = activityScope.get<Greeting>()
-        val greeting2 = activityScope.get<Greeting>()
+        val greeting1 = activityScope.value<Greeting>()
+        val greeting2 = activityScope.value<Greeting>()
         Log.i("GatorSample", "greeting1: $greeting1")
         Log.i("GatorSample", "greeting2: $greeting2")
 
