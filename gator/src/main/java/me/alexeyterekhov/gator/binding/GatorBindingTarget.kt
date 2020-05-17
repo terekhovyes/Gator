@@ -1,6 +1,6 @@
 package me.alexeyterekhov.gator.binding
 
-class GatorBindingKey<T>(
+class GatorBindingTarget<T>(
     val type: Class<T>,
     val name: Any? = null
 )

@@ -1,7 +1,7 @@
 package me.alexeyterekhov.gator.module
 
 import me.alexeyterekhov.gator.binding.GatorBinding
-import me.alexeyterekhov.gator.binding.GatorBindingKey
+import me.alexeyterekhov.gator.binding.GatorBindingTarget
 import me.alexeyterekhov.gator.provider.GatorFactoryProvider
 import me.alexeyterekhov.gator.provider.GatorProvider
 import me.alexeyterekhov.gator.provider.GatorProviderFunction
@@ -39,30 +39,30 @@ class GatorModuleDsl {
 
     fun <T> single(type: Class<T>, name: Any?, providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> {
         val singleProvider = GatorSingleProvider(providerFunction)
-        val bindingKey = GatorBindingKey(type, name)
+        val target = GatorBindingTarget(type, name)
         return GatorBindingBuilder<T>()
             .apply { provider = singleProvider }
-            .apply { keys += bindingKey }
+            .apply { targets += target }
             .also { moduleBuilder.bindingBuilders += it }
     }
 
     fun <T> factory(type: Class<T>, name: Any?, providerFunction: GatorProviderFunction<out T>): GatorBindingBuilder<T> {
         val factoryProvider = GatorFactoryProvider(providerFunction)
-        val bindingKey = GatorBindingKey(type, name)
+        val target = GatorBindingTarget(type, name)
         return GatorBindingBuilder<T>()
             .apply { provider = factoryProvider }
-            .apply { keys += bindingKey }
+            .apply { targets += target }
             .also { moduleBuilder.bindingBuilders += it }
     }
 
     infix fun <T> GatorBindingBuilder<T>.alsoBinds(type: Class<in T>): GatorBindingBuilder<T> =
-        alsoBinds(GatorBindingKey(type))
+        alsoBinds(GatorBindingTarget(type))
 
     fun <T> GatorBindingBuilder<T>.alsoBinds(type: Class<in T>, name: Any?): GatorBindingBuilder<T> =
-        alsoBinds(GatorBindingKey(type, name))
+        alsoBinds(GatorBindingTarget(type, name))
 
-    infix fun <T> GatorBindingBuilder<T>.alsoBinds(bindingKey: GatorBindingKey<in T>): GatorBindingBuilder<T> =
-        apply { keys += bindingKey }
+    infix fun <T> GatorBindingBuilder<T>.alsoBinds(target: GatorBindingTarget<in T>): GatorBindingBuilder<T> =
+        apply { targets += target }
 }
 
 class GatorModuleBuilder {
@@ -76,9 +76,9 @@ class GatorModuleBuilder {
 
 class GatorBindingBuilder<T> {
 
-    val keys = mutableListOf<GatorBindingKey<in T>>()
+    val targets = mutableListOf<GatorBindingTarget<in T>>()
     var provider: GatorProvider<out T>? = null
 
     fun build(): GatorBinding<T> =
-        GatorBinding(keys, checkNotNull(provider))
+        GatorBinding(targets, checkNotNull(provider))
 }

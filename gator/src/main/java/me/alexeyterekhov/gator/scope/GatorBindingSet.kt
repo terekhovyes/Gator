@@ -8,11 +8,11 @@ class GatorBindingSet {
     private val typeToNameToBinding = mutableMapOf<Class<*>, MutableMap<Any, GatorBinding<*>>>()
 
     fun put(binding: GatorBinding<*>, override: Boolean) {
-        binding.keys.forEach { bindingKey ->
-            if (bindingKey.name == null) {
-                putUnnamed(bindingKey.type, binding, override)
+        binding.targets.forEach { target ->
+            if (target.name == null) {
+                putUnnamed(target.type, binding, override)
             } else {
-                putNamed(bindingKey.type, bindingKey.name, binding, override)
+                putNamed(target.type, target.name, binding, override)
             }
         }
     }
