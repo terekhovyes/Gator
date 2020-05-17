@@ -19,8 +19,8 @@ class GatorScope(
             .forEach { bindingSet.put(it, override) }
     }
 
-    inline fun <reified T> value(name: Any? = null): T =
-        value(T::class.java, name)
+    inline fun <reified T> instance(name: Any? = null): T =
+        instance(T::class.java, name)
 
     inline fun <reified T> provider(name: Any? = null): () -> T =
         provider(T::class.java, name)
@@ -28,17 +28,17 @@ class GatorScope(
     inline fun <reified T> lazy(name: Any? = null): Lazy<T> =
         lazy(T::class.java, name)
 
-    fun <T> value(type: Class<T>, name: Any? = null): T =
-        binding(type, name).provider.value(this)
+    fun <T> instance(type: Class<T>, name: Any? = null): T =
+        binding(type, name).provider.instance(this)
 
     fun <T> provider(type: Class<T>, name: Any? = null): () -> T =
         binding(type, name).let { binding ->
-            { binding.provider.value(this) }
+            { binding.provider.instance(this) }
         }
 
     fun <T> lazy(type: Class<T>, name: Any? = null): Lazy<T> =
         binding(type, name).let { binding ->
-            kotlin.lazy { binding.provider.value(this) }
+            kotlin.lazy { binding.provider.instance(this) }
         }
 
     private fun <T> binding(type: Class<T>, name: Any?): GatorBinding<out T> {

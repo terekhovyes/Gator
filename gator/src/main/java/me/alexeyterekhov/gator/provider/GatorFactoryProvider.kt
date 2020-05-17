@@ -6,6 +6,6 @@ class GatorFactoryProvider<T>(
     private val providerFunction: GatorProviderFunction<out T>
 ) : GatorProvider<T> {
 
-    override fun value(scope: GatorScope): T =
+    override fun instance(scope: GatorScope): T =
         scope.providerFunction()
 }

@@ -6,19 +6,19 @@ class GatorSingleProvider<T>(
     private val providerFunction: GatorProviderFunction<out T>
 ) : GatorProvider<T> {
 
-    private var single: T? = null
+    private var singleInstance: T? = null
     private var isCreated = false
 
     @Suppress("UNCHECKED_CAST")
-    override fun value(scope: GatorScope): T {
+    override fun instance(scope: GatorScope): T {
         if (!isCreated) {
             synchronized(this) {
                 if (!isCreated) {
                     isCreated = true
-                    single = scope.providerFunction()
+                    singleInstance = scope.providerFunction()
                 }
             }
         }
-        return single as T
+        return singleInstance as T
     }
 }
