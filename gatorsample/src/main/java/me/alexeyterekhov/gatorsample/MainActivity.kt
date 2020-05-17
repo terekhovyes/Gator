@@ -15,8 +15,8 @@ class MainActivity : AppCompatActivity() {
         val appScope = Gator.scope(application) {
             include {
                 single { Name("Alexey") }
-                factory { Greeting(value()) }
-                single { GreetingPrinter(value()) }
+                factory { Greeting(instance()) }
+                single { GreetingPrinter(instance()) }
             }
         }
 
@@ -26,20 +26,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val printer1 = activityScope.value<GreetingPrinter>()
-        val printer2 = activityScope.value<GreetingPrinter>()
+        val printer1 = activityScope.instance<GreetingPrinter>()
+        val printer2 = activityScope.instance<GreetingPrinter>()
         printer1.print()
         printer2.print()
         Log.i("GatorSample", "Printer1: $printer1")
         Log.i("GatorSample", "Printer2: $printer2")
 
-        val name1 = activityScope.value<Name>()
-        val name2 = activityScope.value<Name>()
+        val name1 = activityScope.instance<Name>()
+        val name2 = activityScope.instance<Name>()
         Log.i("GatorSample", "name1: $name1")
         Log.i("GatorSample", "name2: $name2")
 
-        val greeting1 = activityScope.value<Greeting>()
-        val greeting2 = activityScope.value<Greeting>()
+        val greeting1 = activityScope.instance<Greeting>()
+        val greeting2 = activityScope.instance<Greeting>()
         Log.i("GatorSample", "greeting1: $greeting1")
         Log.i("GatorSample", "greeting2: $greeting2")
 
