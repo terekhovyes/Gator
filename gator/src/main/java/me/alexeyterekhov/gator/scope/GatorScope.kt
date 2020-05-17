@@ -4,7 +4,6 @@ import me.alexeyterekhov.gator.binding.GatorBinding
 import me.alexeyterekhov.gator.module.GatorModule
 
 class GatorScope(
-    val key: Any? = null,
     val parent: GatorScope? = null
 ) {
 
