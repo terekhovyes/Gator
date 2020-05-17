@@ -11,7 +11,7 @@ class GreetingPrinter(val person: Person) {
 
 Gator.scope(application) {
     include {
-        factory { GreetingPrinter(value()) }
+        factory { GreetingPrinter(instance()) }
     }
 }
 
@@ -21,6 +21,6 @@ val screenScope = Gator.scope(application, screen) {
     }
 }
 
-val greetingPrinter: GreetingPrinter = screenScope.value()
+val greetingPrinter = screenScope.instance<GreetingPrinter>()
 greetingPrinter.print() // "Hello, Gator!"
 ```
