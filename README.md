@@ -1,19 +1,18 @@
 # Gator [![](https://jitpack.io/v/terekhovyes/gator.svg)](https://jitpack.io/#terekhovyes/gator)
 Gator is tiny DI lib. Koin syntax. Toothpick scope model
 
-```
+# Installation
 Root build.gradle file:
+```gradle
 allprojects {
     repositories {
-        ...
-		maven { url 'https://jitpack.io' }
-    }
-}
+	maven { url 'https://jitpack.io' }
+```
 
 App build.gradle file:
+```
 dependencies {
-    implementation 'com.github.terekhovyes:gator:$past_last_version_here'
-}
+    implementation 'com.github.terekhovyes:gator:0.1.0'
 ```
 
 # Example
